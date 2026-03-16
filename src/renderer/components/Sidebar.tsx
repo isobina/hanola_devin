@@ -10,7 +10,7 @@ interface SidebarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onSelectMeeting: (id: string) => void;
-  onNewMeeting: (title: string, templateId?: string) => void;
+  onNewMeeting: (title: string, templateId?: string, attendees?: string[]) => void;
   onDeleteMeeting: (id: string) => void;
   onOpenSettings: () => void;
 }
@@ -166,8 +166,8 @@ export function Sidebar({
       {showNewMeeting && (
         <NewMeetingDialog
           onClose={() => setShowNewMeeting(false)}
-          onCreate={(title, templateId) => {
-            onNewMeeting(title, templateId);
+          onCreate={(title, templateId, attendees) => {
+            onNewMeeting(title, templateId, attendees);
             setShowNewMeeting(false);
           }}
         />

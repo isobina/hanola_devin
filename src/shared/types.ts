@@ -42,6 +42,41 @@ export interface AppSettings {
   defaultTemplateId: string | null;
   audioInputDevice: string | null;
   theme: 'light' | 'dark' | 'system';
+  // Zoom integration
+  zoomClientId: string;
+  zoomClientSecret: string;
+  // Teams integration
+  teamsClientId: string;
+  teamsClientSecret: string;
+}
+
+export interface ZoomMeeting {
+  id: string;
+  topic: string;
+  startTime: string;
+  duration: number;
+  joinUrl: string;
+  participants: string[];
+}
+
+export interface TeamsMeeting {
+  id: string;
+  subject: string;
+  startTime: string;
+  endTime: string;
+  joinUrl: string;
+  organizer: string;
+  attendees: string[];
+}
+
+export interface IntegrationStatus {
+  connected: boolean;
+  provider: 'zoom' | 'teams';
+}
+
+export interface DetectedMeeting {
+  provider: 'zoom' | 'teams';
+  meeting: ZoomMeeting | TeamsMeeting;
 }
 
 export interface RecordingStatus {
@@ -87,4 +122,21 @@ export const IPC_CHANNELS = {
 
   // Export
   EXPORT_FILE: 'export:file',
+
+  // Zoom Integration
+  ZOOM_CONNECT: 'zoom:connect',
+  ZOOM_DISCONNECT: 'zoom:disconnect',
+  ZOOM_GET_STATUS: 'zoom:get-status',
+  ZOOM_GET_CURRENT_MEETING: 'zoom:get-current-meeting',
+
+  // Teams Integration
+  TEAMS_CONNECT: 'teams:connect',
+  TEAMS_DISCONNECT: 'teams:disconnect',
+  TEAMS_GET_STATUS: 'teams:get-status',
+  TEAMS_GET_CURRENT_MEETING: 'teams:get-current-meeting',
+
+  // Integration polling
+  INTEGRATION_START_POLLING: 'integration:start-polling',
+  INTEGRATION_STOP_POLLING: 'integration:stop-polling',
+  INTEGRATION_MEETING_DETECTED: 'integration:meeting-detected',
 } as const;

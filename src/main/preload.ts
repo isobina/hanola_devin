@@ -63,6 +63,29 @@ const electronAPI = {
   // Export
   exportFile: (content: string, defaultName: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.EXPORT_FILE, content, defaultName),
+
+  // Zoom Integration
+  zoomConnect: () => ipcRenderer.invoke(IPC_CHANNELS.ZOOM_CONNECT),
+  zoomDisconnect: () => ipcRenderer.invoke(IPC_CHANNELS.ZOOM_DISCONNECT),
+  zoomGetStatus: () => ipcRenderer.invoke(IPC_CHANNELS.ZOOM_GET_STATUS),
+  zoomGetCurrentMeeting: () => ipcRenderer.invoke(IPC_CHANNELS.ZOOM_GET_CURRENT_MEETING),
+
+  // Teams Integration
+  teamsConnect: () => ipcRenderer.invoke(IPC_CHANNELS.TEAMS_CONNECT),
+  teamsDisconnect: () => ipcRenderer.invoke(IPC_CHANNELS.TEAMS_DISCONNECT),
+  teamsGetStatus: () => ipcRenderer.invoke(IPC_CHANNELS.TEAMS_GET_STATUS),
+  teamsGetCurrentMeeting: () => ipcRenderer.invoke(IPC_CHANNELS.TEAMS_GET_CURRENT_MEETING),
+
+  // Integration polling
+  integrationStartPolling: (provider: 'zoom' | 'teams') =>
+    ipcRenderer.invoke(IPC_CHANNELS.INTEGRATION_START_POLLING, provider),
+  integrationStopPolling: (provider: 'zoom' | 'teams') =>
+    ipcRenderer.invoke(IPC_CHANNELS.INTEGRATION_STOP_POLLING, provider),
+  onMeetingDetected: (callback: (data: { provider: string; meeting: unknown }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { provider: string; meeting: unknown }) => callback(data);
+    ipcRenderer.on(IPC_CHANNELS.INTEGRATION_MEETING_DETECTED, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.INTEGRATION_MEETING_DETECTED, handler);
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

@@ -10,6 +10,10 @@ const store = new Store<AppSettings>({
     defaultTemplateId: null,
     audioInputDevice: null,
     theme: 'system',
+    zoomClientId: '',
+    zoomClientSecret: '',
+    teamsClientId: '',
+    teamsClientSecret: '',
   },
 });
 
@@ -21,6 +25,10 @@ export function getSettings(): AppSettings {
     defaultTemplateId: store.get('defaultTemplateId', null),
     audioInputDevice: store.get('audioInputDevice', null),
     theme: store.get('theme', 'system'),
+    zoomClientId: store.get('zoomClientId', ''),
+    zoomClientSecret: store.get('zoomClientSecret', ''),
+    teamsClientId: store.get('teamsClientId', ''),
+    teamsClientSecret: store.get('teamsClientSecret', ''),
   };
 }
 

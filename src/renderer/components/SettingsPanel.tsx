@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { AppSettings, Template } from '../../shared/types';
+import type { AppSettings, Template, IntegrationStatus } from '../../shared/types';
 import { api } from '../lib/api';
 
 interface SettingsPanelProps {
@@ -18,6 +18,14 @@ export function SettingsPanel({ settings, onSave, onBack }: SettingsPanelProps) 
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<{ name: string; sections: string } | null>(null);
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [zoomClientId, setZoomClientId] = useState('');
+  const [zoomClientSecret, setZoomClientSecret] = useState('');
+  const [teamsClientId, setTeamsClientId] = useState('');
+  const [teamsClientSecret, setTeamsClientSecret] = useState('');
+  const [zoomStatus, setZoomStatus] = useState<IntegrationStatus>({ connected: false, provider: 'zoom' });
+  const [teamsStatus, setTeamsStatus] = useState<IntegrationStatus>({ connected: false, provider: 'teams' });
+  const [connectingZoom, setConnectingZoom] = useState(false);
+  const [connectingTeams, setConnectingTeams] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -26,8 +34,14 @@ export function SettingsPanel({ settings, onSave, onBack }: SettingsPanelProps) 
       setGeminiKey(settings.geminiApiKey);
       setTheme(settings.theme);
       setDefaultTemplateId(settings.defaultTemplateId);
+      setZoomClientId(settings.zoomClientId);
+      setZoomClientSecret(settings.zoomClientSecret);
+      setTeamsClientId(settings.teamsClientId);
+      setTeamsClientSecret(settings.teamsClientSecret);
     }
     api.getTemplates().then(setTemplates);
+    api.zoomGetStatus().then(setZoomStatus);
+    api.teamsGetStatus().then(setTeamsStatus);
   }, [settings]);
 
   const handleSave = () => {
@@ -37,7 +51,45 @@ export function SettingsPanel({ settings, onSave, onBack }: SettingsPanelProps) 
       geminiApiKey: geminiKey,
       theme,
       defaultTemplateId,
+      zoomClientId,
+      zoomClientSecret,
+      teamsClientId,
+      teamsClientSecret,
     });
+  };
+
+  const handleZoomConnect = async () => {
+    setConnectingZoom(true);
+    try {
+      const result = await api.zoomConnect();
+      if (result.success) {
+        setZoomStatus({ connected: true, provider: 'zoom' });
+      }
+    } finally {
+      setConnectingZoom(false);
+    }
+  };
+
+  const handleZoomDisconnect = async () => {
+    await api.zoomDisconnect();
+    setZoomStatus({ connected: false, provider: 'zoom' });
+  };
+
+  const handleTeamsConnect = async () => {
+    setConnectingTeams(true);
+    try {
+      const result = await api.teamsConnect();
+      if (result.success) {
+        setTeamsStatus({ connected: true, provider: 'teams' });
+      }
+    } finally {
+      setConnectingTeams(false);
+    }
+  };
+
+  const handleTeamsDisconnect = async () => {
+    await api.teamsDisconnect();
+    setTeamsStatus({ connected: false, provider: 'teams' });
   };
 
   const handleSaveTemplate = async () => {
@@ -174,6 +226,118 @@ export function SettingsPanel({ settings, onSave, onBack }: SettingsPanelProps) 
               <option key={t.id} value={t.id}>{t.name}</option>
             ))}
           </select>
+        </section>
+
+        {/* Integrations */}
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 uppercase tracking-wider">
+            Integrations
+          </h2>
+          <div className="space-y-4">
+            {/* Zoom */}
+            <div className="p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4 4h10a4 4 0 014 4v8a4 4 0 01-4 4H4a2 2 0 01-2-2V6a2 2 0 012-2zm16 4l-4 3v2l4 3V8z" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Zoom</span>
+                  {zoomStatus.connected && (
+                    <span className="text-[10px] px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded font-medium">
+                      Connected
+                    </span>
+                  )}
+                </div>
+                {zoomStatus.connected ? (
+                  <button
+                    onClick={handleZoomDisconnect}
+                    className="text-xs px-3 py-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  >
+                    Disconnect
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleZoomConnect}
+                    disabled={connectingZoom || !zoomClientId}
+                    className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium transition-colors"
+                  >
+                    {connectingZoom ? 'Connecting...' : 'Connect'}
+                  </button>
+                )}
+              </div>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={zoomClientId}
+                  onChange={e => setZoomClientId(e.target.value)}
+                  placeholder="Zoom Client ID"
+                  className="w-full px-3 py-1.5 text-xs bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                />
+                <input
+                  type="password"
+                  value={zoomClientSecret}
+                  onChange={e => setZoomClientSecret(e.target.value)}
+                  placeholder="Zoom Client Secret"
+                  className="w-full px-3 py-1.5 text-xs bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                />
+              </div>
+              <p className="text-[10px] text-gray-400 mt-2">
+                Create a Zoom OAuth app at marketplace.zoom.us to get credentials. Set redirect URI to http://localhost:28465/callback
+              </p>
+            </div>
+
+            {/* Teams */}
+            <div className="p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-purple-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.5 5h-3V3.5A1.5 1.5 0 0015 2H9a1.5 1.5 0 00-1.5 1.5V5h-3A1.5 1.5 0 003 6.5v11A1.5 1.5 0 004.5 19h15a1.5 1.5 0 001.5-1.5v-11A1.5 1.5 0 0019.5 5zM9 3.5h6V5H9V3.5zM12 15a3 3 0 110-6 3 3 0 010 6z" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Microsoft Teams</span>
+                  {teamsStatus.connected && (
+                    <span className="text-[10px] px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded font-medium">
+                      Connected
+                    </span>
+                  )}
+                </div>
+                {teamsStatus.connected ? (
+                  <button
+                    onClick={handleTeamsDisconnect}
+                    className="text-xs px-3 py-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  >
+                    Disconnect
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleTeamsConnect}
+                    disabled={connectingTeams || !teamsClientId}
+                    className="text-xs px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-lg font-medium transition-colors"
+                  >
+                    {connectingTeams ? 'Connecting...' : 'Connect'}
+                  </button>
+                )}
+              </div>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={teamsClientId}
+                  onChange={e => setTeamsClientId(e.target.value)}
+                  placeholder="Azure AD Application (Client) ID"
+                  className="w-full px-3 py-1.5 text-xs bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                />
+                <input
+                  type="password"
+                  value={teamsClientSecret}
+                  onChange={e => setTeamsClientSecret(e.target.value)}
+                  placeholder="Azure AD Client Secret"
+                  className="w-full px-3 py-1.5 text-xs bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                />
+              </div>
+              <p className="text-[10px] text-gray-400 mt-2">
+                Register an app in Azure AD portal. Set redirect URI to http://localhost:28465/callback. Required permissions: OnlineMeetings.Read, Calendars.Read, User.Read
+              </p>
+            </div>
+          </div>
         </section>
 
         {/* Templates */}

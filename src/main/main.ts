@@ -4,6 +4,7 @@ import { Database } from './database';
 import { setupAudioHandlers } from './audio';
 import { setupAIHandlers } from './ai';
 import { setupSettingsHandlers, getSettings } from './settings';
+import { setupIntegrationHandlers } from './integrations';
 import { IPC_CHANNELS } from '../shared/types';
 import fs from 'fs';
 
@@ -44,6 +45,7 @@ app.whenReady().then(() => {
   setupAIHandlers(() => getSettings());
   setupSettingsHandlers();
   setupExportHandlers();
+  setupIntegrationHandlers(mainWindow);
 
   createWindow();
 

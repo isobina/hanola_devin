@@ -49,8 +49,8 @@ export function App() {
     loadSettings();
   }, [loadMeetings, loadSettings]);
 
-  const handleNewMeeting = async (title: string, templateId?: string) => {
-    const meeting = await api.createMeeting({ title, template_id: templateId });
+  const handleNewMeeting = async (title: string, templateId?: string, attendees?: string[]) => {
+    const meeting = await api.createMeeting({ title, template_id: templateId, attendees });
     await loadMeetings();
     setSelectedMeetingId(meeting.id);
     setActiveMeetingId(meeting.id);

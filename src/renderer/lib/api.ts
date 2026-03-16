@@ -1,7 +1,7 @@
 // Wrapper around electron API for use in renderer
 // Falls back to mock data when not running in Electron (e.g., during development in browser)
 
-import type { Meeting, Note, ChatMessage, Template, AppSettings } from '../../shared/types';
+import type { Meeting, Note, ChatMessage, Template, AppSettings, IntegrationStatus, ZoomMeeting, TeamsMeeting } from '../../shared/types';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
 
@@ -31,6 +31,10 @@ const mockStore: {
     defaultTemplateId: null,
     audioInputDevice: null,
     theme: 'system',
+    zoomClientId: '',
+    zoomClientSecret: '',
+    teamsClientId: '',
+    teamsClientSecret: '',
   },
 };
 
@@ -259,6 +263,64 @@ export const api = {
 
   onAIStreamDone: (callback: () => void): (() => void) => {
     if (isElectron) return window.electronAPI.onAIStreamDone(callback);
+    return () => {};
+  },
+
+  // Zoom Integration
+  zoomConnect: async (): Promise<{ success: boolean; error?: string }> => {
+    if (isElectron) return window.electronAPI.zoomConnect();
+    return { success: true };
+  },
+
+  zoomDisconnect: async (): Promise<{ success: boolean }> => {
+    if (isElectron) return window.electronAPI.zoomDisconnect();
+    return { success: true };
+  },
+
+  zoomGetStatus: async (): Promise<IntegrationStatus> => {
+    if (isElectron) return window.electronAPI.zoomGetStatus();
+    return { connected: false, provider: 'zoom' };
+  },
+
+  zoomGetCurrentMeeting: async (): Promise<ZoomMeeting | null> => {
+    if (isElectron) return window.electronAPI.zoomGetCurrentMeeting();
+    return null;
+  },
+
+  // Teams Integration
+  teamsConnect: async (): Promise<{ success: boolean; error?: string }> => {
+    if (isElectron) return window.electronAPI.teamsConnect();
+    return { success: true };
+  },
+
+  teamsDisconnect: async (): Promise<{ success: boolean }> => {
+    if (isElectron) return window.electronAPI.teamsDisconnect();
+    return { success: true };
+  },
+
+  teamsGetStatus: async (): Promise<IntegrationStatus> => {
+    if (isElectron) return window.electronAPI.teamsGetStatus();
+    return { connected: false, provider: 'teams' };
+  },
+
+  teamsGetCurrentMeeting: async (): Promise<TeamsMeeting | null> => {
+    if (isElectron) return window.electronAPI.teamsGetCurrentMeeting();
+    return null;
+  },
+
+  // Integration polling
+  integrationStartPolling: async (provider: 'zoom' | 'teams'): Promise<{ success: boolean }> => {
+    if (isElectron) return window.electronAPI.integrationStartPolling(provider);
+    return { success: true };
+  },
+
+  integrationStopPolling: async (provider: 'zoom' | 'teams'): Promise<{ success: boolean }> => {
+    if (isElectron) return window.electronAPI.integrationStopPolling(provider);
+    return { success: true };
+  },
+
+  onMeetingDetected: (callback: (data: { provider: string; meeting: unknown }) => void): (() => void) => {
+    if (isElectron) return window.electronAPI.onMeetingDetected(callback);
     return () => {};
   },
 };
